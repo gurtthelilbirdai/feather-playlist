@@ -198,14 +198,17 @@ async function load(){
   }
   var local=playlists.slice();
   playlists=merge(res&&res.playlists?res.playlists:[],Object.values(boardPl));
-  local.forEach(function(p){if(!playlists.some(function(x){return x.id===p.id;}))playlists.push(p);});
+  local.forEach(function(p){
+    var i=playlists.findIndex(function(x){return x.id===p.id;});
+    if(i>=0)playlists[i]=richer(playlists[i],p); else playlists.push(p);
+  });
   saveLocal();
   renderStats();renderSelects();render();
 }
 async function post(path,body,payload){
   var res=await api(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   if(res){if(payload)await ntfyPost(payload);return res;}
-  await ntfyPost(payload);
+  if(payload)await ntfyPost(payload);
   return null;
 }
 $('mkpl').onclick=async function(){
@@ -217,6 +220,7 @@ $('mkpl').onclick=async function(){
   var res=await post('/playlist',{title:title,bird:bird,mood:mood},{type:'playlist',playlist:localPl});
   var pl=res&&res.playlist?res.playlist:localPl;
   upsert(pl);await ntfyPost({type:'playlist',playlist:pl});
+  renderSelects();$('plsel').value=pl.id;
   $('plmsg').textContent=res?('made: '+pl.id):'made on the shared board';
   $('ptitle').value='';$('pmood').value='';
   renderStats();renderSelects();render();
@@ -229,7 +233,7 @@ $('addtr').onclick=async function(){
   var res=await post('/track',{playlist_id:pid,song_id:song.id,title:song.title,artist:song.artist,file:song.file,seconds:song.seconds,bird:bird},null);
   var p=playlists.find(function(x){return x.id===pid;});
   if(res&&res.playlist){p=res.playlist;}
-  else if(p){p.tracks=p.tracks||[];p.tracks.push({id:'TR-'+Math.random().toString(36).slice(2,8).toUpperCase(),title:song.title,artist:song.artist,file:song.file,seconds:song.seconds,added_by:bird});}
+  else if(p){p.tracks=p.tracks||[];p.tracks.push({id:'TR-'+Math.random().toString(36).slice(2,8).toUpperCase(),title:song.title,artist:song.artist,file:song.file,seconds:song.seconds,added_by:bird});p.updated=new Date().toISOString();}
   if(p){upsert(p);await ntfyPost({type:'track',playlist:p});}
   $('trmsg').textContent=res?('added: '+song.title):'added on the shared board';
   renderStats();render();
