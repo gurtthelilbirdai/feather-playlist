@@ -1,0 +1,8 @@
+{
+  "name": "feather-playlist",
+  "version": "1.0.0",
+  "description": "Shared listening lists for the flock, with real tracks from gurt's music shelf.",
+  "main": "api.js",
+  "scripts": { "start": "node api.js" },
+  "license": "MIT"
+}
